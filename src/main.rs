@@ -43,6 +43,10 @@ fn main() {
     ncurses::endwin();
 }
 
+// Fill a blank spot with a 2 or 4 piece.
+//
+// Probably goes to infinite loop if given a full board, so don't do that.
+// Can't be arsed to fix.
 fn generate_square(board: &mut [[u64; 4]; 4]) {
     let mut rndbuf = [0u8];
     match getrandom(&mut rndbuf) {
@@ -68,11 +72,15 @@ fn generate_square(board: &mut [[u64; 4]; 4]) {
     board[x][y] = new_square;
 }
 
+// Check if any pieces can be moved
 fn check_moves(board: &[[u64; 4]; 4]) -> bool {
     for x in 0..board.len() {
         for y in 0..board[x].len() {
             if board[x][y] == 0 {
+                // blanks
                 return true;
+                // merges
+                // Verbose, I know. I tried an ||-chain, but it was even uglier.
             } else if (x > 0) && (board[x-1][y] == board[x][y]) {
                 return true;
             } else if (x < 3) && (board[x+1][y] == board[x][y]) {
@@ -90,6 +98,8 @@ fn check_moves(board: &[[u64; 4]; 4]) -> bool {
 fn draw_board(board: &[[u64; 4]; 4]) {
     for x in 0..board.len() {
         for y in 0..board.len() {
+            // Dammit rust.
+            // It should be safe to case an usize between 0 and 3 to i32
             let xx: i32 = x.try_into().unwrap();
             let yy: i32 = (6 * y).try_into().unwrap();
             ncurses::mvprintw(xx, yy, &format!("{:5}", board[x][y]));
@@ -98,11 +108,13 @@ fn draw_board(board: &[[u64; 4]; 4]) {
 }
 
 fn get_direction() -> Option<Direction> {
+    // Can't put "'x' as i32" casts to the match directly, so enjoy constants.
     const H: i32 = 'h' as i32;
     const J: i32 = 'j' as i32;
     const K: i32 = 'k' as i32;
     const L: i32 = 'l' as i32;
     const Q: i32 = 'q' as i32;
+    // TODO: UPPERCASE
     loop {
         match ncurses::getch() {
             ncurses::constants::KEY_DOWN  | H => return Some(Direction::Down),
@@ -115,11 +127,17 @@ fn get_direction() -> Option<Direction> {
     }
 }
 
+// Return value:
+// If pieces were merged: sum of the values of the merged pieces
+// If pieces were moved, but not merged: zero
+// If pieces were not moved: None
 fn move_board(board: &mut [[u64; 4]; 4], dir: Direction) -> Option<u64> {
     let mut score: u64 = 0;
     let mut moved = false;
     for x in 0..board.len() {
         for y in 0..board[x].len() {
+            // Start from rightmost column when going right,
+            // bottom column when going down, etc.
             let (xx, yy) = match dir {
                 Direction::Up => (x, y),
                 Direction::Down => (3-x, y),
@@ -142,6 +160,10 @@ fn move_board(board: &mut [[u64; 4]; 4], dir: Direction) -> Option<u64> {
     }
 }
 
+// Return value:
+// If pieces were merged: value of the merged piece
+// If pieces were moved, but not merged: zero
+// If pieces were not moved: None
 fn move_square(board: &mut [[u64; 4]; 4], x: usize, y: usize, dir: Direction) -> Option<u64> {
     if board[x][y] == 0 {
         return None;
@@ -149,6 +171,7 @@ fn move_square(board: &mut [[u64; 4]; 4], x: usize, y: usize, dir: Direction) ->
     let mut next_x: usize = x;
     let mut next_y: usize = y;
     match (&dir, x, y) {
+        // Return None if hitting edge
         (Direction::Up,    0, _) => { return None },
         (Direction::Up,    _, _) => { next_x = x - 1 },
         (Direction::Down,  3, _) => { return None },
@@ -173,3 +196,4 @@ fn move_square(board: &mut [[u64; 4]; 4], x: usize, y: usize, dir: Direction) ->
         None
     }
 }
+
