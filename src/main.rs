@@ -109,19 +109,23 @@ fn draw_board(board: &[[u64; 4]; 4]) {
 
 fn get_direction() -> Option<Direction> {
     // Can't put "'x' as i32" casts to the match directly, so enjoy constants.
-    const H: i32 = 'h' as i32;
-    const J: i32 = 'j' as i32;
-    const K: i32 = 'k' as i32;
-    const L: i32 = 'l' as i32;
-    const Q: i32 = 'q' as i32;
-    // TODO: UPPERCASE
+    const H_L: i32 = 'h' as i32;
+    const H_U: i32 = 'H' as i32;
+    const J_L: i32 = 'j' as i32;
+    const J_U: i32 = 'J' as i32;
+    const K_L: i32 = 'k' as i32;
+    const K_U: i32 = 'K' as i32;
+    const L_L: i32 = 'l' as i32;
+    const L_U: i32 = 'L' as i32;
+    const Q_L: i32 = 'q' as i32;
+    const Q_U: i32 = 'Q' as i32;
     loop {
         match ncurses::getch() {
-            ncurses::constants::KEY_DOWN  | H => return Some(Direction::Down),
-            ncurses::constants::KEY_UP    | J => return Some(Direction::Up),
-            ncurses::constants::KEY_LEFT  | K => return Some(Direction::Left),
-            ncurses::constants::KEY_RIGHT | L => return Some(Direction::Right),
-            Q => return None,
+            ncurses::constants::KEY_LEFT  | H_L | H_U => return Some(Direction::Left),
+            ncurses::constants::KEY_DOWN  | J_L | J_U => return Some(Direction::Down),
+            ncurses::constants::KEY_UP    | K_L | K_U => return Some(Direction::Up),
+            ncurses::constants::KEY_RIGHT | L_L | L_U => return Some(Direction::Right),
+            Q_L | Q_U => return None,
             _ => ()
         }
     }
